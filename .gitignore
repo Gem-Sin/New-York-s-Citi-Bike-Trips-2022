@@ -20,3 +20,12 @@ __pycache__/
 venv/
 env/
 *.egg-info/
+
+# Ignore big map exports
+citibike_map_template.html
+visualisations/*.html
+
+# Jupyter
+.ipynb_checkpoints/
+# macOS
+.DS_Store
