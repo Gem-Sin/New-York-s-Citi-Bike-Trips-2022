@@ -15,49 +15,106 @@ st.markdown("This dashboard explores 2022 Citi Bike usage patterns, visualising 
 
 
 # ######################### IMPORT DATA #########################
-
+@st.cache_data
+def load_csv(path):
+    return pd.read_csv(path)
+    
 # Load Top 20 stations csv
-top20 = pd.read_csv("top20_stations.csv")
+top20 = load_csv("top20_stations.csv")
 # Load trips and temperature csv
-daily = pd.read_csv("daily_trips_vs_temp_2022.csv")
+daily = load_csv("daily_trips_vs_temp_2022.csv")
 
 # Ensure the date column is parsed
 if "date" in daily.columns:
     daily["date"] = pd.to_datetime(daily["date"])
+
+# =============== SIDEBAR FILTERS ===============
+with st.sidebar:
+    st.header("Filters")
+    # Top-N slider 
+    top_n = st.slider("Show top start stations", 5, 20, 20)
+
+    # Filter within the Top 20
+    station_choices = sorted(top20["station"].unique())
+    picked_stations = st.multiselect("Filter specific station(s)", station_choices)
+
+    # Date range filter for the daily chart
+    min_date = pd.to_datetime(daily["date"]).min().date()
+    max_date = pd.to_datetime(daily["date"]).max().date()
+    date_range = st.slider(
+        "Date range (daily chart)",
+        min_value=min_date, max_value=max_date,
+        value=(min_date, max_date)
+    )
+
+st.caption("Use the filters in the sidebar to adjust the number of top start stations and the time range for analysis.")
+
 
 # ######################### DEFINE THE CHARTS #########################
 
 ## Bar chart (Top 20)
 st.subheader("Top 20 Start Stations by Trips (2022)")
 
-# ensure sorted Top 20
-top20 = top20.sort_values("trip_count", ascending=False).head(20)
+# Create a filtered Top-N dataframe for plotting
+df_top = top20.sort_values("trip_count", ascending=False)
+if picked_stations:
+    df_top = df_top[df_top["station"].isin(picked_stations)]
+df_top = df_top.head(top_n)
 
-fig_bar = go.Figure(
-    go.Bar(
-        x=top20["station"],
-        y=top20["trip_count"],
-        marker={"color": top20["trip_count"], "colorscale": "Viridis"},
-    )
-)
+if df_top.empty:
+    st.warning("No stations match the current filter(s). Try clearing the station filter or increasing Top-N.")
+else:
+    fig_bar = go.Figure(data=[
+        go.Bar(
+            x=df_top["station"],
+            y=df_top["trip_count"],
+            text=df_top["trip_count"],
+            textposition="auto",
+            hovertemplate="<b>%{x}</b><br>Trips: %{y:,}<extra></extra>",
+            marker=dict(color=df_top["trip_count"], colorscale="Viridis"),
+        )
+    ])
+    
 fig_bar.update_layout(
-    title="Top 20 Start Stations by Trips (2022)",
-    xaxis_title="station",
-    yaxis_title="trip_count",
-    height=600,
-)
+        xaxis_title="Station",
+        yaxis_title="Trips",
+        height=600,
+        margin=dict(l=40, r=20, t=60, b=100),
+       
+        xaxis=dict(
+            categoryorder="array",
+            categoryarray=df_top["station"],
+            tickangle=-35,
+            tickfont=dict(size=10),
+        ),
+    )
+
 st.plotly_chart(fig_bar, use_container_width=True)
 
-## Line chart (Dual axis: Trips vs Temp)
+# Insight
+top_row = df_top.iloc[0]
+st.markdown(
+    f"**Insight:** Showing top **{len(df_top)}** start stations. "
+    f"Peak station: **{top_row['station']}** with **{int(top_row['trip_count']):,}** trips."
+)
+
+
+# ######################### Line Chart: Trips vs Temperature ###########################
 st.subheader("Daily Trips vs Average Temperature (Dual Axis)")
 
-fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
+# Filter the daily df by date range
+mask = (
+    (daily["date"].dt.date >= date_range[0])
+    & (daily["date"].dt.date <= date_range[1])
+)
+daily_f = daily.loc[mask].copy()
 
-# trips on left axis
+# Make the dual-axis chart
+fig_2 = make_subplots(specs=[[{"secondary_y": True}]])
 fig_2.add_trace(
     go.Scatter(
-        x=daily["date"],
-        y=daily["trip_count"],
+        x=daily_f["date"],
+        y=daily_f["trip_count"],
         name="Daily bike rides",
         mode="lines",
         line=dict(width=2),
@@ -65,26 +122,37 @@ fig_2.add_trace(
     secondary_y=False,
 )
 
-# temperature on right axis
 fig_2.add_trace(
     go.Scatter(
-        x=daily["date"],
-        y=daily["avg_temp"],
-        name="Daily temperature (°C)",
+        x=daily_f["date"],
+        y=daily_f["avg_temp"],
+        name="Average temperature (°C)",
         mode="lines",
         line=dict(width=2, dash="dot"),
     ),
     secondary_y=True,
 )
+
 fig_2.update_layout(
-    title="Daily Trips vs Avg Temperature in 2022",
     height=800,
+    margin=dict(l=40, r=20, t=40, b=60),
+    legend=dict(orientation="h", y=-0.2),
 )
 fig_2.update_xaxes(title_text="Date")
-fig_2.update_yaxes(title_text="Sum of trips", secondary_y=False)
-fig_2.update_yaxes(title_text="Avg Temp (°C)", secondary_y=True)
+fig_2.update_yaxes(title_text="Number of Trips", secondary_y=False)
+fig_2.update_yaxes(title_text="Temperature (°C)", secondary_y=True)
 
 st.plotly_chart(fig_2, use_container_width=True)
+
+# Insight
+if len(daily_f) > 2:
+    corr = daily_f["trip_count"].corr(daily_f["avg_temp"])
+    st.markdown(
+        f"**Insight:** Between {date_range[0]} and {date_range[1]}, the correlation between temperature and rides is **{corr:.2f}**. "
+        f"This suggests that warmer days generally see more rides."
+    )
+else:
+    st.caption("Select a wider date range to view trip and temperature trends.")
 
 # ######################### ADD THE MAP #########################
 st.subheader("Citi Bike Flow Map (Kepler.gl)")
