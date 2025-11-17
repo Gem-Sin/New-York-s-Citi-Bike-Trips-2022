@@ -1,0 +1,14 @@
+# --- Core libraries used in Citi Bike dashboard ---
+
+# Visualisation and analytics
+pandas==1.5.1
+numpy==1.23.5
+plotly==5.13.0
+matplotlib==3.7.1
+seaborn==0.12.1
+
+# Streamlit and dashboard tools
+streamlit==1.20.0
+streamlit-keplergl==0.3.0
+numerize==0.12
+pillow==9.4.0
