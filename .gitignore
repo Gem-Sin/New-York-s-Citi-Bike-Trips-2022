@@ -1,5 +1,5 @@
 # --- DATA FILES ---
-*.csv
+# *.csv
 *.zip
 *.gz
 *.parquet
