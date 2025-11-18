@@ -68,11 +68,7 @@ Included datasets (<25MB):
 - 01 Project Management/ - Project brief
 - 02 Data/ - Cleaned & sample datasets (<25MB)
 - 03 Scripts/ - Jupyter notebooks, Streamlit scripts
-- 04 Analysis & Visualisations/ - Charts, maps, HTML exports, visualisations/ → PNG versions of visuals
-README.md
-requirements.txt
-.gitignore
-
+- 04 Analysis & Visualisations/ - Charts, maps, HTML exports, PNG versions of visuals
 
 ---
 
