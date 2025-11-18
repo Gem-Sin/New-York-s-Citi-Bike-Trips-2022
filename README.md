@@ -74,7 +74,7 @@ Included datasets (<25MB):
 
 ## Deliverables
 
-- **Streamlit Dashboard:** 
+- **Streamlit Dashboard:** https://new-york-s-citi-bike-trips-2022-csyovbdv594blsplcgrlapp.streamlit.app/
 - **Kepler.gl Geospatial Map:** Included in `/04 Analysis & Visualisations/`  
 - **PNG Visualisations:** Located in `/visualisations/`  
 
@@ -90,7 +90,7 @@ Included datasets (<25MB):
    - mapping  
    - dashboard development  
 3. View exported charts and maps in **04 Analysis & Visualisations**.  
-4. Run the Streamlit dashboard  
+4. Run the Streamlit dashboard: https://new-york-s-citi-bike-trips-2022-csyovbdv594blsplcgrlapp.streamlit.app/ 
 
 
 ---
