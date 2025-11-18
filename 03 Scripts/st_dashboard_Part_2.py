@@ -8,6 +8,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit.components.v1 as components
 
+# Project paths
+BASE_DIR = Path(__file__).resolve().parents[1]  # repo root
+DATA_DIR = BASE_DIR / "02 Data"
+MAP_DIR = BASE_DIR / "04 Analysis & Visualisations"
+KEPLER_PATH = MAP_DIR / "kepler.gl.html"
+
+
+
 st.set_page_config(page_title='Citi Bike 2022 Dashboard', layout='wide')
 
 
@@ -17,13 +25,14 @@ def load_csv(path):
     return pd.read_csv(path)
 
 # Sample for stations + seasons
-trips = load_csv("citibike_sample.csv")
+trips = load_csv(DATA_DIR / "citibike_sample.csv")
 
 # Daily trips vs temperature for dual-axis chart
-daily = load_csv("daily_trips_vs_temp_2022.csv")
+daily = load_csv(DATA_DIR / "daily_trips_vs_temp_2022.csv")
 
 # Top 20 stations for bar chart
-top20 = load_csv("top20_stations.csv")
+top20 = load_csv(DATA_DIR / "top20_stations.csv")
+
 
 # Ensure date column is parsed in trips sample
 if "date" in trips.columns:
@@ -290,7 +299,8 @@ if page == "Trips vs Temperature":
 if page == "Kepler Map":
     st.subheader("Citi Bike Flow Map (Kepler.gl)")
 
-    map_path = Path("kepler.gl.html")
+    # Use the map stored in 04 Analysis & Visualisations
+    map_path = KEPLER_PATH
 
     if map_path.exists():
         st.caption(
@@ -301,7 +311,9 @@ if page == "Kepler Map":
             html_data = f.read()
         components.html(html_data, height=1000, scrolling=True)
     else:
-        st.error("Map file not found — place kepler.gl.html next to st_dashboard.py")
+        st.error(
+            f"Map file not found — expected at: {map_path}"
+        )
 
 # ############### RECOMMENDATIONS PAGE ####################
 if page == "Recommendations":
